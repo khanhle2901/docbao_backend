@@ -2,24 +2,19 @@ const pool = require('../configs/connectDB')
 
 const table = 'categories'
 const Category = {
-  async list(page, amount) {
+  async list() {
     try {
       const qb = await pool.get_connection()
-      const response = await qb.select('title').get(table)
-      console.log(response)
-      return 'hello'
+      const response = await qb.select(['id', 'name', 'status', 'id_parent_category']).get(table)
+      return response
     } catch (error) {
-      return error
-    } finally {
+      return 'fail'
     }
+    // finally {
+    //   qb.disconnect()
+    // }
   },
   async add(name, idParent = null) {
-    console.log(
-      new Date().toLocaleString('en-GB', {
-        timeZone: 'Asia/ho_chi_minh',
-      })
-    )
-    // return
     try {
       const qb = await pool.get_connection()
       let response
@@ -28,8 +23,35 @@ const Category = {
         name,
         id_parent_category: idParent,
         status: 0,
+        created_at: Date.now(),
       })
 
+      return response
+    } catch (error) {
+      return 'fail'
+    }
+  },
+  async delete(id) {
+    try {
+      const qb = await pool.get_connection()
+      const response = await qb.delete(table, { id })
+    } catch (error) {
+      return 'fail'
+    }
+  },
+  async undate({ id, name, status, idParentCategory }) {
+    try {
+      const qb = await pool.get_connection()
+      const response = await qb.update(
+        table,
+        {
+          name,
+          status,
+          id_parent_category: idParentCategory,
+          updated_at: Date.now(),
+        },
+        { id }
+      )
       return response
     } catch (error) {
       return 'fail'

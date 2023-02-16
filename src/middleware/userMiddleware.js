@@ -10,18 +10,15 @@ const checkAdmin = async (req, res, next) => {
         message: 'missing params',
       })
     }
-    const { id, email } = JSON.parse(CryptoJS.AES.decrypt(userKey, process.env.PRIVATE_KEY).toString(CryptoJS.enc.Utf8))
-    console.log(id)
-    const role = await User.getRole(id)
-    console.log(role)
-    // return
+    const { id, email, role } = JSON.parse(
+      CryptoJS.AES.decrypt(userKey, process.env.PRIVATE_KEY).toString(CryptoJS.enc.Utf8)
+    )
     if (role != 0) {
       return res.json({
         code: 301,
         message: 'invalid user',
       })
     }
-
     next()
   } catch (error) {
     return res.json({

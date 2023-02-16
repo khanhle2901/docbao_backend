@@ -1,15 +1,22 @@
 const pool = require('../configs/connectDB')
+const CryptoJS = require('crypto-js')
 
 const table = 'users'
 
 const User = {
   // get role
-  async getRole(id) {
+  async add({ name, email, password }) {
     try {
+      password = CryptoJS.AES.encrypt(password, process.env.PRIVATE_KEY).toString()
       const qb = await pool.get_connection()
-      const [{ role }] = await qb.select('role').where('id', id).limit(1).get(table)
-      console.log(role)
-      return role
+      const response = await qb.insert(table, {
+        name,
+        email,
+        password,
+        role: 3,
+        created_at: Date.now(),
+      })
+      return response
     } catch (error) {
       return 'fail'
     }
