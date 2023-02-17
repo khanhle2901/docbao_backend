@@ -28,4 +28,22 @@ const checkAdmin = async (req, res, next) => {
   }
 }
 
-module.exports = { checkAdmin }
+const authMiddleware = async (req, res, next) => {
+  try {
+    const { userKey } = req.body
+    if (!userKey) {
+      return res.json({
+        code: 300,
+        message: 'missing param',
+      })
+    }
+    next()
+  } catch (error) {
+    return res.json({
+      code: 500,
+      messgae: 'error',
+    })
+  }
+}
+
+module.exports = { checkAdmin, authMiddleware }
