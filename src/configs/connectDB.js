@@ -1,9 +1,9 @@
 const QueryBuilder = require('node-querybuilder')
 const settings = {
-  host: 'localhost',
+  host: process.env.HOST_DB,
   database: 'doc_bao',
   user: 'root',
-  password: '',
+  password: process.env.PASSWORD_DB,
 }
 const pool = new QueryBuilder(settings, 'mysql', 'pool')
 

@@ -39,7 +39,6 @@ const User = {
         .get(table)
       return response
     } catch (error) {
-      console.log(error)
       return 'fail'
     }
   },
@@ -61,7 +60,6 @@ const User = {
 
       return response
     } catch (error) {
-      console.log(error)
       return 'fail'
     }
   },

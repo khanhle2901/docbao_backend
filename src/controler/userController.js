@@ -1,7 +1,7 @@
-const { body, validationResult } = require('express-validator')
 const CryptoJS = require('crypto-js')
 
 const User = require('../model/userModel')
+const { registerMail } = require('../mailer/mail')
 
 const addUser = async (req, res) => {
   try {
@@ -21,9 +21,13 @@ const addUser = async (req, res) => {
         message: 'existed user',
       })
     }
+    const verifyToken = CryptoJS.AES.encrypt(
+      JSON.stringify({ name, email, password }),
+      process.env.PRIVATE_KEY
+    ).toString()
 
-    const response = await User.add({ name, email, password })
-    if (response == 'fail') {
+    const sendMailResult = await registerMail(email, verifyToken)
+    if (sendMailResult == 'fail') {
       return res.json({
         code: 500,
         message: 'error',
@@ -31,14 +35,52 @@ const addUser = async (req, res) => {
     }
     return res.json({
       code: 201,
-      message: 'success',
-      id: response.insertId,
+      message: 'an email was sent',
     })
   } catch (error) {
     return res.json({
       code: 500,
       message: 'error',
     })
+  }
+}
+
+const userRegister = async (req, res) => {
+  try {
+    const token = req.params.token
+    const { name, email, password } = JSON.parse(
+      CryptoJS.AES.decrypt(token, process.env.PRIVATE_KEY).toString(CryptoJS.enc.Utf8)
+    )
+    const isExistUser = await User.isExist(email)
+    if (isExistUser === 'fail') {
+      return res.send(`
+        <h2>Verify fail</h2>
+        <p>Internal ERROR</p>
+      `)
+    }
+    const [{ count }] = isExistUser
+    if (count > 0) {
+      return res.send(`
+      <title>Verify email</title>
+        <h2>Verify fail</h2>
+        <p>You have verified once</p>
+      `)
+    }
+    const response = await User.add({ name, email, password })
+    if (response == 'fail') {
+      return res.send(`
+      <title>Verify email</title>
+        <h2>Verify fail</h2>
+        <p>Internal ERROR</p>
+      `)
+    }
+    return res.send(`
+    <title>Verify email</title>
+        <h2>Verify successfully</h2>
+        <p>Wellcome to ${process.env.APP_NAME}</p>
+      `)
+  } catch (error) {
+    return res.send('error')
   }
 }
 
@@ -119,7 +161,6 @@ const updateUser = async (req, res) => {
         message: 'error',
       })
     }
-    console.log(response)
     return res.json(response)
   } catch (error) {
     return res.json({
@@ -129,4 +170,4 @@ const updateUser = async (req, res) => {
   }
 }
 
-module.exports = { addUser, login, updateUser }
+module.exports = { addUser, login, updateUser, userRegister }

@@ -3,6 +3,7 @@ const { config } = require('dotenv')
 const CryptoJS = require('crypto-js')
 const path = require('path')
 const bodyParser = require('body-parser')
+const nodemailer = require('nodemailer')
 
 const postRoutes = require('./routes/postRoutes')
 const categoryRoutes = require('./routes/categoryRoutes')
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
   console.log(CryptoJS.AES.encrypt(JSON.stringify(obj), process.env.PRIVATE_KEY).toString())
   return res.send('hi')
 })
+
 postRoutes(app)
 categoryRoutes(app)
 userRoutes(app)
