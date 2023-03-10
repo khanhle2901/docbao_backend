@@ -17,17 +17,17 @@ const registerMail = async (email, data) => {
     to: email,
     subject: 'Verify email',
     html: `<html>
-    <head>
-    <title>Verify account</title>
-    </head>
-    <body>
-    <h2>Wellcome to ${process.env.APP_NAME}</h2>
-    <p>We received an <b>Signup</b> action using this email</p>
-    <p>If that are you, <a href="http://${process.env.APP_URL}user/user-register/${encodeURIComponent(
+      <head>
+        <title>Verify account</title>
+      </head>
+      <body>
+        <h2>Wellcome to ${process.env.APP_NAME}</h2>
+        <p>We received an <b>Signup</b> action using this email</p>
+        <p>If that are you, <a href="http://${process.env.APP_URL}user/user-register/${encodeURIComponent(
       data
     )}"> <b>Verify</b> </a></p>
 
-    </body>
+      </body>
     </html>
     `,
   }

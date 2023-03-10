@@ -15,6 +15,7 @@ const getListCategory = async (req, res) => {
       data: response,
     })
   } catch (error) {
+    console.log(error)
     return res.json({
       code: 500,
       message: 'error',

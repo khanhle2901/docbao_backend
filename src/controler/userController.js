@@ -144,7 +144,8 @@ const login = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const { name, avartar_cdn, userKey } = req.body
+    const { name, avartar_cdn } = req.body
+    const { userKey } = req.headers
     const { id, email, role } = JSON.parse(
       CryptoJS.AES.decrypt(userKey, process.env.PRIVATE_KEY).toString(CryptoJS.enc.Utf8)
     )

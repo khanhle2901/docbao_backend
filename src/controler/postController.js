@@ -33,7 +33,7 @@ const getPost = async (req, res) => {
     delete data.id_censor
     delete data.censored_at
     delete data.deleted
-    await Post.updateViewed(id, data.viewed)
+    Post.updateViewed(id, data.viewed)
     return res.json({
       code: 200,
       data: data,
@@ -46,5 +46,72 @@ const getPost = async (req, res) => {
   }
   return res.send({ id, slug })
 }
-
-module.exports = { getPosts, getPost }
+const getSearch = async (req, res) => {
+  const { searchData } = req.params
+  try {
+    if (searchData.trim() == '') {
+      return res.json({
+        code: 203,
+        message: 'missing param',
+      })
+    }
+    const searchArr = searchData.trim().split(' ')
+    const response = await Post.search(searchArr)
+    if (response == 'fail') {
+      return res.json({
+        code: 500,
+        message: 'error',
+      })
+    }
+    return res.json({
+      code: 200,
+      messgae: 'ok',
+      data: response,
+    })
+  } catch (error) {
+    console.log(error)
+    return res.json({
+      code: 500,
+      message: 'error',
+    })
+  }
+}
+const getNew = async (req, res) => {
+  try {
+    let num = 5
+    const response = await Post.new(num)
+    console.log(response)
+    if (response == 'fail') {
+      return res.json({
+        code: 500,
+        message: 'error',
+      })
+    }
+    return res.json({
+      code: 200,
+      message: 'ok',
+      data: response,
+    })
+  } catch (error) {
+    return res.json({
+      code: 500,
+      message: 'error',
+    })
+  }
+}
+const add = async (req, res) => {
+  try {
+    console.log(req.body)
+    return res.json({
+      code: 201,
+      message: 'ok',
+    })
+  } catch (error) {
+    console.log(error)
+    return res.json({
+      code: 500,
+      message: 'error',
+    })
+  }
+}
+module.exports = { getPosts, getPost, getSearch, getNew, add }
