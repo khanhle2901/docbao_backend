@@ -3,27 +3,34 @@ const { config } = require('dotenv')
 const CryptoJS = require('crypto-js')
 const path = require('path')
 const bodyParser = require('body-parser')
-const nodemailer = require('nodemailer')
 const cors = require('cors')
 
 const postRoutes = require('./routes/postRoutes')
 const categoryRoutes = require('./routes/categoryRoutes')
 const userRoutes = require('./routes/userRoutes')
 const multiparty = require('connect-multiparty')
-const { authMiddleware } = require('./middleware/userMiddleware')
+const { authMiddleware, writerMiddleWare } = require('./middleware/userMiddleware')
 
 let multer = require('multer')
-
+const { hanleUploadAvartar } = require('./controler/postController')
+config()
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/')
+    cb(null, __dirname + '/public/images/avartarPost')
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + '.jpg') //Appending .jpg
+    try {
+      const { id } = JSON.parse(
+        CryptoJS.AES.decrypt(req.headers.authorization, process.env.PRIVATE_KEY).toString(CryptoJS.enc.Utf8)
+      )
+      cb(null, `${id}-${Date.now()}.jpg`) //Appending .jpg
+    } catch (error) {
+      console.log(error)
+    }
   },
 })
 
-const upload = multer({ dest: __dirname + '/public/images/avartarPost' })
+const upload = multer({ storage, limits: { fileSize: 500000 } })
 
 const MultipartyMiddleware = multiparty({ uploadDir: __dirname + '/public/images' })
 const MultipartyAvartarPostMiddleware = multiparty({ uploadDir: __dirname + '/public/images/avartarPost' })
@@ -32,18 +39,23 @@ const app = express()
 app.use(bodyParser.urlencoded({ extended: true })) // body-paser
 app.use(bodyParser.json())
 app.use(cors())
-config()
 
 const port = process.env.PORT
 
 app.get('/', (req, res) => {
-  console.log(__dirname)
   const obj = {
-    id: 1,
+    id: 9,
     email: 'admin@gmail.com',
     role: 0,
   }
-  console.log(CryptoJS.AES.encrypt(JSON.stringify(obj), process.env.PRIVATE_KEY).toString())
+
+  // console.log(CryptoJS.AES.encrypt(JSON.stringify(obj), process.env.PRIVATE_KEY).toString())
+  // console.log(
+  //   CryptoJS.AES.decrypt(
+  //     'U2FsdGVkX18Q8QE9vaCJxISdz+nQ4wTertdABPW/CK/eURBHzE9VEfheWGLCfFbSfA/l6p74wsYY4v+18ICEGPTF4qtBySkMnSxjpEDlRb4=',
+  //     process.env.PRIVATE_KEY
+  //   ).toString(CryptoJS.enc.Utf8)
+  // )
   return res.send('hi')
 })
 app.post('/api/upload', MultipartyMiddleware, (req, res) => {
@@ -55,37 +67,7 @@ app.post('/api/upload', MultipartyMiddleware, (req, res) => {
 })
 
 //
-app.post('/api/avartar-post', upload.single('file'), (req, res) => {
-  try {
-    console.log(req.body)
-    console.log(req.headers)
-    console.log(req.file)
-    return res.json({
-      code: 201,
-      message: 'ok',
-    })
-  } catch (error) {
-    console.log(error)
-    return res.json({
-      code: 500,
-      message: 'error',
-    })
-  }
-  // try {
-  //   console.log(req.files)
-  //   console.log(req.files.upload.path)
-  //   return res.json({
-  //     code: 201,
-  //     message: 'ok',
-  //     url: process.env.APP_CDN_URL + req.files.upload.path.replace(__dirname + '/public', ''),
-  //   })
-  // } catch (error) {
-  //   return res.json({
-  //     code: 401,
-  //     message: 'error',
-  //   })
-  // }
-})
+app.post('/api/avartar-post', authMiddleware, writerMiddleWare, upload.single('file'), hanleUploadAvartar)
 
 postRoutes(app)
 categoryRoutes(app)

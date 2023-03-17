@@ -5,12 +5,10 @@ const table = 'posts'
 const Post = {
   // qb: await pool.get_connection(),
   async list(page, amount) {
-    console.log(page, amount)
     let qb
     try {
       qb = await pool.get_connection()
       const response = await qb.select('title').get(table)
-      console.log(response)
       return 'hello'
     } catch (error) {
       return error
@@ -25,8 +23,6 @@ const Post = {
       const response = await qb.query(
         `SELECT ${table}.* ,  categories.name AS category_name FROM ${table} INNER JOIN categories ON ${table}.id_category = categories.id WHERE ${table}.id=${id} AND ${table}.deleted = 0 AND ${table}.id_censor IS NOT NULL`
       )
-      console.log(response)
-
       return response
     } catch (error) {
       return 'fail'
@@ -70,8 +66,53 @@ const Post = {
     let qb
     try {
       qb = await pool.get_connection()
-      const response = await qb.select('id,title,avartar_cdn, created_at').order_by('id').limit(num).get(table)
+      const response = await qb.query(
+        `SELECT id,title,avartar_cdn, created_at FROM ${table} WHERE id_censor IS NOT null and deleted = 0 ORDER BY censored_at DESC LIMIT ${num}`
+      )
 
+      return response
+    } catch (error) {
+      console.log(error)
+      return 'fail'
+    } finally {
+      qb.release()
+    }
+  },
+  async add(data) {
+    let qb
+    try {
+      qb = await pool.get_connection()
+      const response = await qb.insert(table, { ...data, created_at: Date.now(), viewed: 0 })
+      return response
+    } catch (error) {
+      return 'fail'
+    } finally {
+      qb.release()
+    }
+  },
+  async postOfCategory(id) {
+    let qb
+    try {
+      qb = await pool.get_connection()
+      const response = await qb
+        .select(
+          // 'id,title,sort_description, avartar_cdn, id_author, viewed, created_at '
+          [
+            table + '.id',
+            table + '.title',
+            table + '.sort_description',
+            table + '.avartar_cdn',
+            table + '.id_author',
+            table + '.viewed',
+            table + '.created_at',
+            'users.name as name_author',
+          ]
+        )
+        .from(table)
+        .where('id_category', id)
+        .join('users', 'users.id=posts.id_author', 'inner')
+        .order_by('id', 'DESC')
+        .get()
       return response
     } catch (error) {
       return 'fail'

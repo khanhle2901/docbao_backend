@@ -1,7 +1,6 @@
 const Post = require('../model/postModel')
 const getPosts = async (req, res) => {
   let { page, type } = req.params
-  console.log(type)
   if (!type || type != 'small' || type != 'large') {
     type = 'small'
   }
@@ -9,11 +8,10 @@ const getPosts = async (req, res) => {
     page = 1
   }
   const result = await Post.list(page, type == 'small' ? 10 : 4)
-  console.log(typeof result)
   return res.send('hi')
 }
 const getPost = async (req, res) => {
-  const { id, slug } = req.params
+  const { id } = req.params
   try {
     const response = await Post.get(id)
     if (response == 'fail') {
@@ -69,7 +67,6 @@ const getSearch = async (req, res) => {
       data: response,
     })
   } catch (error) {
-    console.log(error)
     return res.json({
       code: 500,
       message: 'error',
@@ -80,13 +77,77 @@ const getNew = async (req, res) => {
   try {
     let num = 5
     const response = await Post.new(num)
-    console.log(response)
     if (response == 'fail') {
+      return res.json({
+        code: 500,
+        message: 'errorC',
+      })
+    }
+    response.forEach((element) => {
+      element.avartar_cdn = process.env.APP_CDN_URL + element.avartar_cdn
+    })
+    return res.json({
+      code: 200,
+      message: 'ok',
+      data: response,
+    })
+  } catch (error) {
+    return res.json({
+      code: 500,
+      message: 'errorC',
+    })
+  }
+}
+const add = async (req, res) => {
+  try {
+    return res.json({
+      code: 201,
+      message: 'ok',
+    })
+  } catch (error) {
+    return res.json({
+      code: 500,
+      message: 'error',
+    })
+  }
+}
+const hanleUploadAvartar = async (req, res) => {
+  try {
+    const response = await Post.add({
+      ...req.body,
+      avartar_cdn: '/images/avartarPost/' + req.file.filename,
+      id_author: 1 /* get key from token*/,
+    })
+    return res.json({
+      code: 201,
+      message: 'ok',
+    })
+  } catch (error) {
+    return res.json({
+      code: 500,
+      message: 'error',
+    })
+  }
+}
+const getPostOfcategory = async (req, res) => {
+  try {
+    const id = req.params.id
+    if (!id) {
+      return res.json({
+        code: 404,
+        message: 'missing params',
+      })
+    }
+    const response = await Post.postOfCategory(id)
+    if (response === 'fail') {
       return res.json({
         code: 500,
         message: 'error',
       })
     }
+    response.forEach((item) => {
+      item.avartar_cdn = process.env.APP_CDN_URL + item.avartar_cdn
+    })
     return res.json({
       code: 200,
       message: 'ok',
@@ -99,19 +160,5 @@ const getNew = async (req, res) => {
     })
   }
 }
-const add = async (req, res) => {
-  try {
-    console.log(req.body)
-    return res.json({
-      code: 201,
-      message: 'ok',
-    })
-  } catch (error) {
-    console.log(error)
-    return res.json({
-      code: 500,
-      message: 'error',
-    })
-  }
-}
-module.exports = { getPosts, getPost, getSearch, getNew, add }
+
+module.exports = { getPosts, getPost, getSearch, getNew, add, hanleUploadAvartar, getPostOfcategory }
