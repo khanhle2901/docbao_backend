@@ -2,6 +2,7 @@ const CryptoJS = require('crypto-js')
 
 const User = require('../model/userModel')
 const { registerMail } = require('../mailer/mail')
+const { response } = require('express')
 
 const addUser = async (req, res) => {
   try {
@@ -117,9 +118,10 @@ const login = async (req, res) => {
         process.env.PRIVATE_KEY
       ).toString()
       const data = {
+        id: response.id,
         token: tokenStr,
         name: response.name,
-        avartar_cdn: response.avartar_cdn,
+        avartar_cdn: process.env.APP_CDN_URL + response.avartar_cdn,
       }
       if (response.role != 3) {
         data.role = response.role
@@ -170,5 +172,54 @@ const updateUser = async (req, res) => {
     })
   }
 }
+const loginToken = async (req, res) => {
+  try {
+    // console.log(req.headers.authorization)
+    // return res.json({
+    //   code: 123,
+    //   data: CryptoJS.AES.decrypt(req.headers.authorization, process.env.PRIVATE_KEY).toString(CryptoJS.enc.Utf8),
+    // })
+    const { id, email } = JSON.parse(
+      CryptoJS.AES.decrypt(req.headers.authorization, process.env.PRIVATE_KEY).toString(CryptoJS.enc.Utf8)
+    )
+    const response = await User.getLogin(email)
+    if (response === 'fail') {
+      return res.json({
+        code: 500,
+        message: 'error',
+      })
+    }
+    if (Object.keys(response).length > 0) {
+      const tokenStr = CryptoJS.AES.encrypt(
+        JSON.stringify({
+          id: response.id,
+          email: response.email,
+          role: response.role,
+        }),
+        process.env.PRIVATE_KEY
+      ).toString()
+      const data = {
+        id: response.id,
+        token: tokenStr,
+        name: response.name,
+        avartar_cdn: process.env.APP_CDN_URL + response.avartar_cdn,
+      }
+      if (response.role != 3) {
+        data.role = response.role
+      }
+      return res.json({
+        code: 200,
+        message: 'ok',
+        data: data,
+      })
+    }
+  } catch (error) {
+    console.log(error)
+    return res.json({
+      code: 500,
+      message: 'error',
+    })
+  }
+}
 
-module.exports = { addUser, login, updateUser, userRegister }
+module.exports = { addUser, login, updateUser, userRegister, loginToken }

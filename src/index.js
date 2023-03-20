@@ -49,13 +49,6 @@ app.get('/', (req, res) => {
     role: 0,
   }
 
-  // console.log(CryptoJS.AES.encrypt(JSON.stringify(obj), process.env.PRIVATE_KEY).toString())
-  // console.log(
-  //   CryptoJS.AES.decrypt(
-  //     'U2FsdGVkX18Q8QE9vaCJxISdz+nQ4wTertdABPW/CK/eURBHzE9VEfheWGLCfFbSfA/l6p74wsYY4v+18ICEGPTF4qtBySkMnSxjpEDlRb4=',
-  //     process.env.PRIVATE_KEY
-  //   ).toString(CryptoJS.enc.Utf8)
-  // )
   return res.send('hi')
 })
 app.post('/api/upload', MultipartyMiddleware, (req, res) => {

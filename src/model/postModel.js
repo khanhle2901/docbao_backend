@@ -1,5 +1,5 @@
 const pool = require('../configs/connectDB')
-const { search } = require('../controler/postController')
+// const { search } = require('../controler/postController')
 
 const table = 'posts'
 const Post = {
@@ -19,12 +19,13 @@ const Post = {
   async get(id) {
     let qb
     try {
+      let sql = `SELECT ${table}.* ,  categories.name AS category_name, users.name AS author_name FROM ${table} INNER JOIN categories ON ${table}.id_category = categories.id INNER JOIN users ON ${table}.id_author = users.id WHERE ${table}.id=${id} AND ${table}.deleted = 0 AND ${table}.id_censor IS NOT NULL`
       qb = await pool.get_connection()
-      const response = await qb.query(
-        `SELECT ${table}.* ,  categories.name AS category_name FROM ${table} INNER JOIN categories ON ${table}.id_category = categories.id WHERE ${table}.id=${id} AND ${table}.deleted = 0 AND ${table}.id_censor IS NOT NULL`
-      )
+      const response = await qb.query(sql)
+      console.log(response)
       return response
     } catch (error) {
+      console.log(error)
       return 'fail'
     } finally {
       qb.release()
@@ -113,6 +114,42 @@ const Post = {
         .join('users', 'users.id=posts.id_author', 'inner')
         .order_by('id', 'DESC')
         .get()
+      return response
+    } catch (error) {
+      return 'fail'
+    } finally {
+      qb.release()
+    }
+  },
+  async getNumLike(type, id) {
+    let qb
+    try {
+      qb = await pool.get_connection()
+      let response = null
+      if (type === 'post') {
+        response = await qb.where('id_post', id).count('*')
+      } else if (type === 'comment') {
+        response = await qb.where('id_comment', id).count('*')
+      }
+      console.log(response)
+      return response
+    } catch (error) {
+      return 'fail'
+    } finally {
+      qb.release()
+    }
+  },
+  async isLikeByUser(type, id, idUser) {
+    let qb
+    try {
+      qb = await pool.get_connection()
+      let response = null
+      if (type === 'post') {
+        response = await qb.where('id_post', id).count('*')
+      } else if (type === 'comment') {
+        response = await qb.where('id_comment', id).count('*')
+      }
+      console.log(response)
       return response
     } catch (error) {
       return 'fail'

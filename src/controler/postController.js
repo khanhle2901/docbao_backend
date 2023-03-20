@@ -1,3 +1,6 @@
+const CryptoJS = require('crypto-js')
+const LikePostModel = require('../model/likePostModel')
+
 const Post = require('../model/postModel')
 const getPosts = async (req, res) => {
   let { page, type } = req.params
@@ -12,8 +15,23 @@ const getPosts = async (req, res) => {
 }
 const getPost = async (req, res) => {
   const { id } = req.params
+  const authorization = req.headers.authorization
+  console.log('token:', authorization)
+  let idUser = undefined
+  // let response = null
   try {
-    const response = await Post.get(id)
+    if (authorization) {
+      const user = JSON.parse(CryptoJS.AES.decrypt(authorization, process.env.PRIVATE_KEY).toString(CryptoJS.enc.Utf8))
+      idUser = user.id
+    }
+    if (idUser) {
+      // response = Post.get(id)
+    } else {
+      const response = await Promise.all([Post.get(id), LikePostModel.getNum(id)])
+      console.log(response)
+    }
+    return
+
     if (response == 'fail') {
       return res.json({
         code: 500,
@@ -31,18 +49,19 @@ const getPost = async (req, res) => {
     delete data.id_censor
     delete data.censored_at
     delete data.deleted
+    data.avartar_cdn = process.env.APP_CDN_URL + data.avartar_cdn
     Post.updateViewed(id, data.viewed)
     return res.json({
       code: 200,
       data: data,
     })
   } catch (error) {
+    console.log(error)
     return res.json({
       code: 500,
       message: 'error',
     })
   }
-  return res.send({ id, slug })
 }
 const getSearch = async (req, res) => {
   const { searchData } = req.params
